@@ -79,7 +79,7 @@ def obtain_SHA1(input_string):
     """
 
     # Calculate the SHA-1 hash of both input sequences
-    return str(hashlib.sha1(input_string).hexdigest())
+    return str(hashlib.sha1(input_string.encode('utf-8')).hexdigest())
 
 
 def process_fasta_entry(def_line, seq):

@@ -63,6 +63,6 @@ def obtain_alignment_pickle(old_assembly, new_assembly):
     # Close the file
     old_assembly_file.close()
     # Obtain the hash
-    old_assembly_hash = str(hashlib.sha1("".join(content)).hexdigest())
+    old_assembly_hash = str(hashlib.sha1("".join(content).encode('utf-8')).hexdigest())
     # Return the combination of both hashes
     return str("./Delta/{}_{}".format(new_assembly_hash, old_assembly_hash))
