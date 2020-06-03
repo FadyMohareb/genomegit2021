@@ -51,7 +51,7 @@ def obtain_alignment_pickle(old_assembly, new_assembly):
     # Close the file
     new_assembly_file.close()
     # Obtain the hash
-    new_assembly_hash = str(hashlib.sha1("".join(content)).hexdigest())
+    new_assembly_hash = str(hashlib.sha1("".join(content).encode('utf-8')).hexdigest())
     # Reinititate the content list
     content = []
     # Open the new assembly and loop through the lines
