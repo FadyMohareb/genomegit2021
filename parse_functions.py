@@ -82,7 +82,7 @@ def parse_scf(seq, folder, map_file, seq_index):
     contig_list = re.split("N+", current_nucleotides)
     # Store all the gaps in one list and remove any empty element
     gap_list = re.split("[^N]+", current_nucleotides)
-    gap_list = test = filter(None, gap_list)
+    gap_list = test = list(filter(None, gap_list))
     # Initiate the index, the count of subsequences and the current subsequence
     subseq_count = 0
     index = seq_index
