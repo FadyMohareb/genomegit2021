@@ -12,7 +12,7 @@ if [ "$1" = "Genome" ]; then
       #Make update=1
       update=1
       #If there are dependent files that can be affected, this is not just parsing the genome file, this is an update.
-      if [ -d "Variants" ] || [ -d "Annotation" ] || [ -d "Alignment" ]; then
+      #if [ -d "Variants" ] || [ -d "Annotation" ] || [ -d "Alignment" ]; then
          #Before starting the auto-update, it is necessary that the user has a valid version of mummer and tabix installed.
          command -v mummer >/dev/null 2>&1 || { echo "GenomeGit requires MUMmer for liftover, but no MUMmer installation was found in this machine.  Now aborting."; exit 0;}
          command -v tabix >/dev/null 2>&1 || { echo "GenomeGit requires Tabix for liftover, but no Tabix installation was found in this machine.  Now aborting."; exit 0;}
@@ -21,10 +21,10 @@ if [ "$1" = "Genome" ]; then
             rm -r temporary_directory
          fi
          #Call the updating script, inform of which datasets to be updated. Arguments: file threads size tlength.
-         python $source/update.py $2 $3 $4 $5 $6 $7 $8 $9 ${10} ${11} ${12}
+         python $source/update.py $2 $3 $4 $5 $6 $7 $8 $9 ${10} ${11} ${12} ${13}
          #Delete the temporary directory
          rm -r ./temporary_directory
-      fi
+      #fi
       #When this is done, the genome parsing can go as normal. Inform the user.
       echo ""
       echo "A genome dataset has been detected in the repository. Now overwriting with new dataset."

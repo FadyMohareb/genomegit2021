@@ -10,7 +10,8 @@ update_dependent_datasets.py -new_file- -threads- -file_size- -template_length-
 import os
 import sys
 import datetime
-from subprocess import Popen
+import glob
+from subprocess import Popen, check_output
 from update_functions import detect_updates
 from reconstruct_functions import reconstruct_dataset
 from ObtainAlignment_functions import obtain_alignment
@@ -30,6 +31,7 @@ percent_identity = int(sys.argv[8])
 kmer = int(sys.argv[9])
 segLength = int(sys.argv[10])
 ms_flag = int(sys.argv[11])
+ggw = int(sys.argv[12])
 file_size_bytes = os.path.getsize(new_assembly)
 
 
@@ -193,7 +195,7 @@ def obtain_variables(alignment_pickle):
 # Determine the files to be updated. ToUpdate = {dataset:[[filename.extension,directory,size],[],...]}
 ToUpdate = detect_updates("./RepoMap.txt")
 # If the there are no files to update, inform the user
-update_inform_user(ToUpdate)
+update_inform_user(ToUpdate)  # check if it stops everything
 
 ###############################################
 # PART 1. RECONSTRUCTION OF REPOSITORY DATA #
@@ -208,7 +210,9 @@ os.mkdir("./temporary_directory")
 reconstruct_dataset(size=60, directory="./Genome", output_file="./temporary_directory/genome_old.fa",
                     mode="Genome", seqID="0", region="0")
 # Reconstruct all the files related to the variants and annotation datasets
-reconstruct_annotation_variants(ToUpdate)
+for dataset in ToUpdate.keys():
+    if (dataset != "Genome" and len(ToUpdate[dataset]) != 0):
+        reconstruct_annotation_variants(ToUpdate)
 
 ##############################################
 # PART 2. OBTAIN THE ALIGNMENT INFORMATION #
@@ -218,6 +222,16 @@ reconstruct_annotation_variants(ToUpdate)
 # Determine the alignment pickle
 alignment_pickle = obtain_alignment_pickle("./temporary_directory/genome_old.fa",
                                            new_assembly)
+#check if file has already been added and stored in repository
+new_assembly_hash = alignment_pickle.split("_")[0]
+comp_hash = new_assembly_hash.split("/")[2]
+stored_alignments = [hash for hash in glob.glob("Delta/*"+comp_hash+"*")]
+#to check new hash for  comparing first and second commits
+if (alignment_pickle == new_assembly_hash+"_"+comp_hash):
+    stored_alignments.append(alignment_pickle)
+if (len(stored_alignments) !=0):
+    print("\n\t *** THE REPOSITORY ALREADY CONTAINS THIS FASTA FILE.***\n\tNow aborting.")
+    sys.exit(1)
 variables = obtain_variables(alignment_pickle)
 store_variables(variables=variables, alignment_pickle=alignment_pickle)
 queries, alignment_pickle, summary_Dict, oldSeqs, newSeqs = variables
@@ -225,13 +239,45 @@ queries, alignment_pickle, summary_Dict, oldSeqs, newSeqs = variables
 ###################################################################
 # PART 3. START THE INTERPRETATION OF THE ALIGNMENT INFORMATION #
 ###################################################################
+for dataset in ToUpdate.keys():
+    if (dataset != "Genome" and len(ToUpdate[dataset]) != 0):
+        # Inform the user
+        print("\n\t*PART III. INTERPRETATION OF THE ALIGNMENT INFORMATION AND CREATION OF UPDATED FILES")
+        print("\t{}".format(str(datetime.datetime.now())))
+        # Interpret the information contained in the delta_dict and obtain the updated files.
+        interpret_alignment(queries=queries, threads=number_threads, ToUpdate=ToUpdate,
+                            tlength=template_length, new_assembly=new_assembly)
 
-# Inform the user
-print("\n\t*PART III. INTERPRETATION OF THE ALIGNMENT INFORMATION AND CREATION OF UPDATED FILES")
-print("\t{}".format(str(datetime.datetime.now())))
-# Interpret the information contained in the delta_dict and obtain the updated files.
-interpret_alignment(queries=queries, threads=number_threads, ToUpdate=ToUpdate,
-                    tlength=template_length, new_assembly=new_assembly)
+###################################################################
+# PART 4. OBTAIN ALIGNMENT INFORMATION FOR OLDER COMMITS#
+###################################################################
+if (ggw != 0):
+    # Get list of commits and head commit
+    commitList = check_output(
+        "git log --format=%H", shell=True).decode("utf-8").split()
+    #first commit is HEAD commit
+    commitList.pop(0)
+    #headCommit = check_output(
+        #"git rev-parse HEAD", shell=True).decode("utf-8").rstrip()
+    if (len(commitList) !=0) :
+        print("\n\t*PART IV. OBTAIN ALIGNMENT DATA FOR OLDER COMMITS")
+        #remove previous assembly so it will not align to old assembly
+        os.remove("./temporary_directory/genome_old.fa")
+        for commit in commitList:
+            #if (commit != headCommit):
+                ShellCommand = Popen("git checkout " + commit +
+                                    " 2> /dev/null", shell=True).wait()
+                # reconstruct
+                reconstruct_dataset(size=60, directory="./Genome",
+                                    output_file="./temporary_directory/genome_old.fa", mode="Genome")
+                alignment_pickle1 = obtain_alignment_pickle(
+                    "./temporary_directory/genome_old.fa", new_assembly)
+                variables = obtain_variables(alignment_pickle1)
+                store_variables(variables=variables,
+                                alignment_pickle=alignment_pickle1)
+                os.remove("./temporary_directory/genome_old.fa")
+    ShellCommand = Popen("git checkout master 2> /dev/null", shell=True).wait()
+
 
 # Inform the user the update is completed
 print("\n\t***UPDATE COMPLETED: NOW PARSING THE GENOME DATASET***")

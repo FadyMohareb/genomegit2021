@@ -61,7 +61,17 @@ def complementary_base(base):
              'G': 'C', 'g': 'c',
              'C': 'G', 'c': 'g',
              'T': 'A', 't': 'a',
-             'N': 'N', 'n': 'n'}
+             'N': 'N', 'n': 'n',
+             'R': 'Y', 'r': 'y',
+             'Y': 'R', 'y': 'r',
+             'S': 'S', 's': 's',
+             'W': 'W', 'w': 'w',
+             'K': 'M', 'k': 'm',
+             'M': 'K', 'm': 'k',
+             'B': 'V', 'b': 'v',
+             'D': 'H', 'd': 'h',
+             'H': 'D', 'h': 'd',
+             'V': 'B', 'v': 'b'}
     return comps[base]
 
 
@@ -333,7 +343,7 @@ def filter_mashMap(mash_file, directory, alignment_pickle, out_file, threads, c_
     num_of_zero = ma.floor(ma.log10(key_length)) + 1
     # Loop through the alignments in the dictionary and delete those which do not meet
     # the score as calculated in score function.
-    for query_key in Unfiltered_MashDict.keys()[:]:
+    for query_key in list(Unfiltered_MashDict.keys()):
         query_ID = query_key[0]
         query_length = query_key[1]
         alignments = Unfiltered_MashDict[query_key]
@@ -371,12 +381,12 @@ def filter_mashMap(mash_file, directory, alignment_pickle, out_file, threads, c_
     tp.join()
     # Remove old file directories, add the real directories and add the NUCMER using sed && awk
     call(
-        "cat tmp_delta/* | awk '/[/]/ || /^NUCMER/ {{ next }} 2' > {} ".format(out_file), shell=True)
+        "cat tmp_delta/* | awk '/[\/]/ || /^NUCMER/ {{ next }} 2' > {} ".format(out_file), shell=True)
     # Add file directory paths for the query and reference to the delta file
-    call("sed -i '1i {} {}' {} ".
+    call("gsed -i '1i {} {}' {} ".
          format(reference_directory, query_directory, out_file), shell=True)
     # Add NUCMER to the following line
-    sed_command = ['sed', '-i', '2iNUCMER', out_file]
+    sed_command = ['gsed', '-i', '2iNUCMER', out_file]
     Popen(sed_command).wait()
     # Remove the temporary directory
     shutil.rmtree('tmp_delta')
@@ -391,7 +401,7 @@ def get_sequences_mashmap(ref_file_name, query_file_name, name_out, score, c_fla
                query_file_name, '-p', name_out, '-t', str(1), '-c', str(c_flag), '-b', str(b_flag)]
     # Add score to each delta file at the end of the alignment header line
     Popen(command).wait()
-    Popen("sed 's/^>.*/& {}/' {} -i".format(score,
+    Popen("gsed 's/^>.*/& {}/' {} -i".format(score,
                                             name_out + ".delta"), shell=True).wait()
 
 
@@ -432,13 +442,12 @@ def aligner_caller(aligner_switch, threads, nucmer_directory, reference_director
         Popen(Shellcommand_nucmer).wait()
         # Filter the delta file
         print("\n\t\t - Filtering resulting alignment to obtain equivalent "
-              "sequences across versions {}".format(str(datetime.datetime.now())))
+              "sequences across versions {}".format(str(datetime.datetime.now()))) 
         # filter_nucmer_delta(delta_file="{}.delta".format(
         #     nucmer_directory), out_file=delta_directory)
-
         # TO USE ALL BLOCKS:
         os.rename("{}.delta".format(nucmer_directory), delta_directory)
-
+        
     elif aligner_switch == 1:
         print("\t\t\t  - Running MashMap " + str(datetime.datetime.now()))
 
@@ -519,7 +528,6 @@ def obtain_alignment(old_assembly, new_assembly, directory, threads, ToUpdate, a
     mashmap_directory = '{}/genomeGitMash.out'.format(directory)
     nucmer_directory = '{}/ToFilter'.format(directory)
     delta_directory = '{}/Filtered.delta'.format(alignment_pickle)
-    snp_directory = '{}/Filtered.snp'.format(alignment_pickle)
 
     # Parse the genome assemblies into dictionaries with the following characteristics:
     # {seqKey:[oldID,[line,line...],hash,hash-1]}
@@ -682,7 +690,7 @@ def obtain_alignment(old_assembly, new_assembly, directory, threads, ToUpdate, a
                 # Add the info to the summary_Dict
                 summary_Dict[old_ID] = ["deleted", str(old_length), None]
         # Run show coords
-        Popen("show-coords -c -T -H {}/Filtered.delta > {}/summary.coords".format(
-            alignment_pickle, alignment_pickle), shell=True).wait()
+        Popen("show-coords -c -T -H {} > {}/summary.coords".format(
+            delta_directory, alignment_pickle), shell=True).wait()
 
     return queries, alignment_pickle, summary_Dict, oldSeqs, newSeqs

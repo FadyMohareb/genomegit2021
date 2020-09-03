@@ -15,6 +15,7 @@ from ObtainAlignment_functions import obtain_alignment
 from update_functions import detect_updates
 from collections import OrderedDict
 import gc
+from report_functions import buscoReport
 
 
 # Load arguments: commit_A commit_B threads report
@@ -22,7 +23,8 @@ commit_A = str(sys.argv[1])
 commit_B = str(sys.argv[2])
 number_threads = str(sys.argv[3])
 merge = int(sys.argv[4])
-
+busco = sys.argv[5]
+lineage = sys.argv[6]
 # Create a temporary directory
 if(os.path.isdir("./.git/info/temporary_directory")):
     shutil.rmtree("./.git/info/temporary_directory")
@@ -31,9 +33,9 @@ os.mkdir("./.git/info/temporary_directory")
 print("\nNow producing a summary review between commits " + commit_A + " and " + commit_B +
       ". Warning: If you have added any data into the repository but did not commit, these changes will be lost.\n")
 message_A = subprocess.check_output(
-    "git log --format=%B -n 1 " + commit_A, shell=True)
+    "git log --format=%B -n 1 " + commit_A, shell=True).decode("utf-8")
 message_B = subprocess.check_output(
-    "git log --format=%B -n 1 " + commit_B, shell=True)
+    "git log --format=%B -n 1 " + commit_B, shell=True).decode("utf-8")
 # Reconstruct the first version of the assembly
 ShellCommand = Popen(
     "git checkout " + str(sys.argv[1]) + " 2> /dev/null", shell=True).wait()
@@ -46,6 +48,19 @@ reconstruct_dataset(size=60, directory="./Genome",
                     output_file="./.git/info/temporary_directory/assembly_2.fa", mode="Genome")
 # Checkout back to the master
 ShellCommand = Popen("git checkout master 2> /dev/null", shell=True).wait()
+
+# If busco option was selected
+if (busco != "0"):
+    print("\nNow producing a busco analysis for commits " + commit_A + " and " + commit_B)
+    input_A = os.path.abspath("./.git/info/temporary_directory/assembly_1.fa")
+    input_B = os.path.abspath("./.git/info/temporary_directory/assembly_2.fa")
+    if (lineage != "0"):
+        buscoReport(input_A, lineage, message_A)
+        buscoReport(input_B, lineage, message_B)
+    else:
+        buscoReport(input_file=input_A, output_folder=message_A)
+        buscoReport(input_file=input_B, output_folder=message_B)
+        
 
 # Obtain alignment pickle of both assemblies
 alignment_pickle1 = obtain_alignment_pickle(
@@ -71,6 +86,7 @@ if(alignment_pickle != ""):
 
 # Otherwise it is required to perform the alignment between both assemblies
 else:
+    alignment_pickle=alignment_pickle1
     # Inform the user
     print("No stored alignment was found. Now creating genome alignment. This will take some time.\n")
     # Detect the updates
@@ -113,7 +129,7 @@ for oldID, (tag, oldLength, newID) in summary_Dict.items():
             oldID, oldLength, newID))
     elif tag == 'deleted':
         del_list.append("\t------\n\t|\n\t| Sequence: {} ({} nt) --> deleted\n\t|\n\t------".format(
-            oldID, oldLength, newID))
+            oldID, oldLength))
 
 # iterate through the delta_list and populate the split and merge dicts
 for oldID, newID, oldLength, newLength in delta_list:
@@ -127,7 +143,7 @@ for oldID, newID, oldLength, newLength in delta_list:
         split_dict[oldID] = [newID]
 
 # open the output file and write the header
-with open("../GenomeGit_report.txt", "w") as report_file:
+with open("../GenomeGit_report_{}_{}.txt".format(message_A.rstrip(), message_B.rstrip()), "w") as report_file:
     report_file.write('DIFF REPORT FOR:')
     report_file.write("\n\t###\n\t#\tVERSION A: {} ({})\n\t###\n".format(
         message_A.rstrip(), commit_A))

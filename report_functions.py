@@ -1,5 +1,11 @@
 #!/usr/bin/env python
 
+import sys
+import os
+import subprocess
+from subprocess import Popen
+from pathlib import Path
+
 # FUNCTIONS FOR CREATION OF THE REPO REPORT
 
 
@@ -23,7 +29,7 @@ def report_repo():
     """
 
     # Create a dictionary about the features of the genomic sequences
-    # {seqKey:[seqID,lenght,conitg_count,N_count,[{file:vcf},{file:gff},{file:sam}]]}
+    # {seqKey:[seqID,length,contig_count,N_count,[{file:vcf},{file:gff},{file:sam}]]}
     genome_report = {}
     # Create a dictionary showing the relationship between the seqID and the seqKey  {seqID:seqKey}
     ID_key = {}
@@ -36,7 +42,7 @@ def report_repo():
             seq_count += 1
             seqKey = "Sequence" + str(seq_count)
             # Add the line to the dict as a key and start the values
-            # {seqKey:[seqID,lenght,conitg_count,N_count,[{file:vcf},{file:gff},{file:sam}]]}
+            # {seqKey:[seqID,length,contig_count,N_count,[{file:vcf},{file:gff},{file:sam}]]}
             genome_report[seqKey] = [line[1:].rstrip(), "", 0, 0, [{}, {}, {}]]
             # Add it to the ID_key
             ID_key[(line[1:].rstrip()).split(" ")[0]] = seqKey
@@ -108,15 +114,15 @@ def report_repo():
                             # If the dataset is Alignment
                             if (dataset == "Alignment"):
                                 genome_report[ID_key[seqID]
-                                ][4][2][subfile[0]] = line_count
+                                              ][4][2][subfile[0]] = line_count
                             # If it is annotaiton
                             elif (dataset == "Annotation"):
                                 genome_report[ID_key[seqID]
-                                ][4][1][subfile[0]] = line_count
+                                              ][4][1][subfile[0]] = line_count
                             # Otherwise it is variants
                             else:
                                 genome_report[ID_key[seqID]
-                                ][4][0][subfile[0]] = line_count
+                                              ][4][0][subfile[0]] = line_count
                             # Store the new seqID and re-start the line count
                             line_count = 0
                             seqID = line.split("\t")[0][1:]
@@ -127,14 +133,43 @@ def report_repo():
                 # Check the seqID is in the genome assembly
                 if (seqID in ID_key.keys()):
                     if (dataset == "Alignment"):
-                        genome_report[ID_key[seqID]][4][2][subfile[0]] = line_count
+                        genome_report[ID_key[seqID]
+                                      ][4][2][subfile[0]] = line_count
                     # If it is annotaiton
                     elif (dataset == "Annotation"):
-                        genome_report[ID_key[seqID]][4][1][subfile[0]] = line_count
+                        genome_report[ID_key[seqID]
+                                      ][4][1][subfile[0]] = line_count
                     # Otherwise it is variants
                     else:
-                        genome_report[ID_key[seqID]][4][0][subfile[0]] = line_count
+                        genome_report[ID_key[seqID]
+                                      ][4][0][subfile[0]] = line_count
             # Close the map file
             map_file.close()
     # Return the dictionary {seqKey:[seqID,lenght,conitg_count,N_count,[{file:vcf},{file:gff},{file:sam}]]}
     return genome_report
+
+############################
+# BUSCO report
+############################
+
+
+def buscoReport(input_file, input_lineage=None, output_folder=None):
+    """
+    Function to create a busco report
+    """
+    if (input_lineage == None):
+        lineage = "--auto-lineage"
+    else:
+        lineage = "-l " + input_lineage
+    if (output_folder == None):
+        output = "busco_" + Path(input_file).stem
+    #print(output)
+    else:
+        output = "busco_" + output_folder
+
+    os.chdir('../')
+
+    Popen("busco -i {} -m genome -o {} {} > /dev/null ".format(input_file, output, lineage), shell=True).wait()
+    #remove extra files generated and fasta file
+    Popen('rm -rf {} busco_downloads'.format(input_file), shell=True).wait()
+    os.chdir('./.gnmgit')

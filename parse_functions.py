@@ -226,7 +226,7 @@ def IsContig(seq):
     They will return true when one of these sequences is detected
     """
 
-    # Check if it has gaps bigger than N-25, in which case this is a contig
+    # Check if it has gaps bigger than N-25, in which case this is not a contig
     if(seq.find("NNNNNNNNNNNNNNNNNNNNNNNNN") == -1):
         return True
     else:

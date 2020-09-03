@@ -2,12 +2,15 @@ Welcome to GenomeGit's help page. To execute any of the commands type: genomegit
 
 GenomeGit utilizes git and its commands, as well as the following custom commands:
 
-	add --threads --no-update --aligner --additional_args*** <input_file>
+	add --threads --no-update --aligner --ggw --additional_args*** <input_file>
 
 			Parses <input_file> into git-compatible objects and adds it to the repository. Number of threads can be specified
 			optionally for liftover (default is --threads=1 or --t=1). If the optional parameter --no-update is specified, no automatic
 			coordinate migration of VCF, GFF and SAM files will be performed. With optional parameter --aligner or --a, the user can
-			specify between MashMap + Nucmer (--aligner=1/--a=1) or Nucmer only (--aligner=2/--a=2).
+			specify between MashMap + Nucmer (--aligner=1/--a=1) or Nucmer only (--aligner=2/--a=2). Optional parameter --ggw can be 
+			used when adding a new assembly to the repository if there are at least two versions of an assembly already present. This
+			option ensures that the new assembly is aligned to all the the assemblies in the repository so that the link rearrangement 
+			track in GenomeGitWeb is available between the new assembly and all the previous assemblies.
 
 			***Additional arguments can be passed	to MashMap, including segment length (--segLength/--s), kmer (--kmer/--k), and
 			percent identity (--pi), so you may optimize your aligner for speed and accuracy. In addition, you can choose to handle merges
@@ -38,19 +41,24 @@ GenomeGit utilizes git and its commands, as well as the following custom command
 			Returns the discarded entries of <file_name> (only available after a repository update).
 
 
-	diff --threads --message <version1> <version2>
+	diff --threads --message --busco --lineage_dataset <version1> <version2>
 
 			Show the genome assembly update summary and produce a report file for genome versions specified by commit hashes of
 			verion 1 and version 2: <version1> <version2>. Optional parameter --threads allows to choose the number of threads to
 			use if an alignment must be performed, default is --threads=1 (only considered if alignment is necessary). Optional
-			parameter --message can be used if commit messages are provided instead of commit hashes.
+			parameter --message can be used if commit messages are provided instead of commit hashes. Optional parameter --busco
+			can be used to run a busco analysis on both assembly versions. --lineage_dataset can be used alongside --busco to
+			specify the clade specific information to be used in the analysis. Without --lineage_dataset, automated lineage
+			selection will be used.
 
 
-	report	--commit-hash --message
+	report	--busco --lineage_dataset --commit-hash --message
 
 			Create a report summarising the information contained in the repository at any given moment. Optional parameters
 			--commit-hash and --message can be used in order to create a report for a specific version of interest by indicating
-			the commit hash or the commit message respectively.
+			the commit hash or the commit message respectively. Optional parameter --busco can be used to run a busco analysis 
+			on the assembly . --lineage_dataset can be used alongside --busco to specify the clade specific information 
+			to be used in the analysis. Without --lineage_dataset, automated lineage selection will be used.
 
 
 	delete <file_name>

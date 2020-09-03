@@ -80,6 +80,7 @@ elif [ "$1" = "add" ]; then
          c_flag=2000
          b_flag=1
          merge_or_split_flag=1
+         ggw=0
          #Loop through the arguments
          for WORD; do
             case $WORD in
@@ -127,6 +128,10 @@ elif [ "$1" = "add" ]; then
                  #Shift the arguments (jump to the next)
                  shift
                  ;;
+                 --ggw)
+                  ggw=1
+                  shift
+                  ;;
                # --b=*|--breaklen=*)
                #   #Determine the value of the b flag used for nucmer
                #   b_flag=${1#*=}
@@ -290,7 +295,7 @@ elif [ "$1" = "add" ]; then
                         echo "$class dataset detected. Now parsing $filename into git-compatible objects."
                         #Parse and add the dataset. Arguments: class file threads size tlenght
                         bash $source/parse_file.bash "$class" "$filename" "$threads" "$filesize" "$tlength" "$aligner"\
-                           "$c_flag" "$b_flag" "$percent_identity" "$kmer" "$segLength" "$merge_or_split_flag"
+                           "$c_flag" "$b_flag" "$percent_identity" "$kmer" "$segLength" "$merge_or_split_flag" "$ggw"
                         #Otherwise it was an invalid file
                      else
                         echo "Unrecognised file format: $filename"
@@ -494,6 +499,8 @@ elif [ "$1" = "diff" ]; then
       threads=1
       message=0
       merge=0
+      busco=0
+      lineage=0
       #Loop through the arguments
       for WORD; do
          case $WORD in
@@ -521,6 +528,16 @@ elif [ "$1" = "diff" ]; then
                #Shift arguments
                shift
                ;;
+            --busco)
+               #if commmand is given run busco analysis
+               busco=1
+               shift
+               ;;
+            --l=*)
+               #if specific lineage is given for command
+               lineage=${1#*=}
+               shift
+               ;;
          esac
       done
       #If the user provided a message, determine the commit hash associated to them (in case of multiple ones, the first one will be selected)
@@ -534,8 +551,11 @@ elif [ "$1" = "diff" ]; then
          commit_A=$1
          commit_B=$2
       fi
+      #if ! [ "$lineage" = "0" ]; then
+      #   species=$11
+      #fi
       #Run the summary. Arguments: commitA commitB threads merge
-      python $source/review.py $commit_A $commit_B $threads $merge
+      python $source/review.py $commit_A $commit_B $threads $merge $busco $lineage
    else
       #Inform the user ther is no .gnmgit repo
       echo "No genomegit repository detected. Use genomegit init to initiate one."
@@ -551,6 +571,8 @@ elif [ "$1" = "report" ]; then
       cd .gnmgit
       #Default parameters
       commit=0
+      busco=0
+      lineage=0
       #Loop through the arguments
       for WORD; do
          case $WORD in
@@ -568,10 +590,21 @@ elif [ "$1" = "report" ]; then
                #Shift the arguments (jump to the next)
                shift
                ;;
+            --busco)
+               #if commmand is given run busco analysis
+               busco=1
+               shift
+               ;;
+            --lineage_dataset=*)
+               #if specific lineage is given for command
+               lineage=${1#*=}
+               shift
+               ;;
+
          esac
       done
       #Run the report. Optional arguments: commit-hash
-      python $source/report.py $commit
+      python $source/report.py $commit $busco $lineage
       #Inform the user ther is no .gnmgit repo
    else
       echo "No genomegit repository detected. Use genomegit init to initiate one."

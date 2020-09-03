@@ -1,26 +1,29 @@
-# genomeGit 3.0: A distributed version control system for fast and efficient updating of genome assembly data.
-genomeGit 3.0 is a distributed version control system which utilizes Git for the quick storage and management of genomic data. It enables quick 'lifting-over' of genomic depedent files, while being storage efficient. GenomeGit 3.0 can currently deal with the following datasets:
+# genomeGit 3.1: A distributed version control system for fast and efficient updating of genome assembly data.
+genomeGit 3.1 is a distributed version control system which utilizes Git for the quick storage and management of genomic data. It enables quick 'lifting-over' of genomic depedent files, while being storage efficient. GenomeGit 3.1 can currently deal with the following datasets:
 
 * Genome assemblies (FASTA)
 * Variant Calling Files (VCF)
 * Annotation files (GFF/GFF3)
 * Alignment files (SAM/BAM)
 
-GenomeGit 3.0 is currently only compatiable with Unix Operating Systems.
+GenomeGit 3.1 is currently only compatiable with Unix Operating Systems.
 
-# What's changed with genomeGit 3.0?
-genomeGit 3.0 is now able to make use of BAM files. There is also a new hybrid alignment option avaliable using MashMap2 and Nucmer4. 
-In addition, genomeGit 3.0 is faster, more accurate, can handle inversions, and handle both splits and merges within genomic data. 
+# What's changed with genomeGit 3.1?
+GenomeGit 3.1 has been optimised for use with GenomeGitWeb - allowing users the option of aligning assembly files in the absence of genomic dependent files and aligning the new assembly file to all the previous assembly files in the repository. The former allows users to make use of GenomeGit and GenomeGitWeb for comparsion purposes, without lift-over, whilst the latter ensures that the link tracks, which show identical sequences between files, are available between the new assembly version all the previous ones.
+Additionally, a BUSCO analysis pipeline has been added to the report and difference functionality to allow users to assess and compare the completeness of assembly files in the repository.
+Improvements to increase the user friendliness of the program and remove minor bugs, have also been made. FASTA files with ambiguous IUPAC DNA characters are now able to be stored in GenomeGit 3.1, all the functionalities are fully portable in Mac OS X, and duplicate FASTA files cannot be added to the repository.
 
-### Prerequisites for genomeGit 3.0
+### Prerequisites for genomeGit 3.1
 The following dependencies are required: 
 * [Python v 2.7+](https://www.python.org/)
 * [Git 2.7.4](https://git-scm.com/downloads)
 * [MUMmer 4.0](https://mummer4.github.io/)
 * [MashMap 2.0](https://github.com/marbl/MashMap)
 * [Tabix 1.9](http://www.htslib.org/doc/tabix.html)
+To run BUSCO analysis:
+* [BUSCO](https://busco.ezlab.org/)
 
-genomeGit 3.0 also makes use of the following Python modules: 
+genomeGit 3.1 also makes use of the following Python modules: 
  * [pytabix 0.1](https://pypi.org/project/pytabix/)
  * [pyfaidx 0.5.5.2](https://pypi.org/project/pyfaidx/)
 
@@ -29,7 +32,7 @@ In order to be able to run the program anywhere on your system, run ```genomegit
 #### Temporary solution
 You can temporarily append the *genomegit* directory to the *$PATH* variable by executing ```PATH=$PATH:directory```, where ```directory``` repersents the location of the *genomeGit* directory. The user may need to make the main script executable using ```chmod u+x <path_to_genomeGit>/genomegit```. 
 
-#### Uninstalling genomeGit 3.0
+#### Uninstalling genomeGit 3.1
 
 To uninstall genomeGit, remove the genomeGit directory from your PC and then remove the symlink using the following: ```rm -rf ./genomegit``` and  then ```sudo rm /usr/bin/genomegit```.
 
@@ -51,7 +54,10 @@ This repository will store all of your genomic data and the *.git* repository. Y
 
 To add files into the repository, execute ```genomegit add <file>``` and ```genomegit commit -m <message>```. 
 #### Additional ```add``` arguments for lift-over
-Additional arguments can be passed to ```genomegit add <file>```, such at the number of threads (```--t=<x>``` or ```--thread=<x>```),  and the aligner you wish to use (```--a=<1 or 2>``` or ```--aligner=<1 or 2>```, where 1 will run the hybrid aligner and 2 runs Nucmer4 only). 
+Additional arguments can be passed to ```genomegit add <file>```, such as the aligner you wish to use (```--a=<1 or 2>``` or ```--aligner=<1 or 2>```, where 1 will run the hybrid aligner and 2 runs Nucmer4 only). 
+
+When a user already has a genome assembly present within the repository and wishes to update it, genomeGit 3.1 will automatically migrate the coordinates of the stored dependent files. This is called lift-over. This process can be computationally demanding and it is thus recommended to use the optional ```--t=<x>``` or ```--threads=<x>``` parameter to choose the number of threads used during lift-over.
+
 #### Specific aligner-related flags
 Flags specific to NUCmer4 (```--c=<x>``` or ```--mincluster=<x>```) can be used ([see the NUCmer documentation for information regarding these flags](http://mummer.sourceforge.net/manual/#nucmer)). 
 
@@ -62,13 +68,14 @@ For the hyrid alignment, the user can also use the flag ```--ms=<x>``` as either
 
 Using only NUCmer4 will result in the detection of both splits and merges. 
 
-#### Obtaining a report of lifted over assemblies
-genomeGit 3.0 will automatically classify the file inputted and parse it into it's respective Git-compatible sub-files, within the Git repository. A summary of the charactersticis of the data within the repository can be visualised using the command ```genomegit report```. 
+#### GenomeGitWeb link track flag
+To align the new genome assembly to all the other assemblies in the repository, ```--ggw``` can be used.
 
-When a user already has a genome assembly present within the repository and wishes to update it, genomeGit 3.0 will automatically migrate the coordinates of the stored dependent files. This is called lift-over. This process can be computationally demanding and it is thus recommended to use the optional ```--t=<x>``` or ```--threads=<x>``` parameter to choose the number of threads used during lift-over.
+#### Obtaining a report of lifted over assemblies
+genomeGit 3.1 will automatically classify the file inputted and parse it into it's respective Git-compatible sub-files, within the Git repository. A summary of the charactersticis of the data within the repository can be visualised using the command ```genomegit report```. 
 
 ### 3. Creating a remote repository
-genomeGit 3.0 enable users to perform updates within thier local repository and push this to a central repository for all users to use. This can be performed by the command ```genomegit init --bare <remote_name>```.
+genomeGit 3.1 enable users to perform updates within thier local repository and push this to a central repository for all users to use. This can be performed by the command ```genomegit init --bare <remote_name>```.
 
 #### Remote repository within the same machine
 To access a remote repository, the remote repository address needs to be added. This can be done as follows: ```genomegit remote add <remote_name> <remote_location>``` where ```<remote_location>``` is the absolute path to the repository of interested, if located within the same machine it's executed from.
@@ -99,7 +106,9 @@ To view the difference between two versions of the genomic data present within t
 
 The user can alternatively use ```--message=<message>``` if they used a commit message instead. The number of threads can be provided using ```genomegit diff --threads``` or ```--t=<x>```, as previously described. This might prove useful when comparing non-consecutive versions, as comparisons of assembly versions may need to be performed. ```genomegit log``` will provide a list of commits with their hashes.
 
-The user can also execute ```genomegit report``` to obtain a report output *GenomeGit_Report.txt*, which contains the all the information regarding the differences between assembly versions.
+The user can also execute ```genomegit report``` to obtain a report output *GenomeGit_Report.txt*, which contains the all the information regarding a particular assembly.
+
+A BUSCO analysis can also be executed while making a report or viewing the difference between two versions of genomic data by including the additional parameter ```--busco```. The lineage dataset used in BUSCO can also be specified using ```--lineage_dataset=<x>```.
 
 
 ## Example commands
@@ -120,7 +129,7 @@ The user can also execute ```genomegit report``` to obtain a report output *Geno
 #### Adding and committing files into the repository
 ```genomegit add /path/to/directory/*``` 
 
-```genomegit add --t=32 --a=2 --c=3000 NewAssembly.fa```
+```genomegit add --t=32 --a=2 --c=3000 --ggw NewAssembly.fa```
 
 ```genomegit commit -m "My_First_Commit"```
 #### Extracting a file out of the repository
@@ -133,3 +142,5 @@ The user can also execute ```genomegit report``` to obtain a report output *Geno
 ```genomegit report	--commit-hash 352d69d2327dc95b58d6ec10130366ddc760bd3d```
 
 ```genomegit diff --message My_First_Commit My_Second_Commit```
+
+```genomegit diff --ggw --lineage_dataset=acidobacteria_odb10 --message My_First_Commit My_Second_Commit```

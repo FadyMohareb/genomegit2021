@@ -5,34 +5,54 @@ import sys
 import os
 import subprocess
 from subprocess import Popen
-from report_functions import report_repo
+from report_functions import report_repo, buscoReport
+from reconstruct_functions import reconstruct_dataset
+
 
 # Load the arguments. Obtain commit hash.
 commit = str(sys.argv[1])
+busco = str(sys.argv[2])
+lineage = str(sys.argv[3])
 # If there is no genome dataset, abort
 if not (os.path.isdir("./Genome")):
     print("*** THE REPOSITORY DOES NOT CONTAIN A GENOME DATASET AT THE SELECTED COMMIT. "
           "A GENOME DATASET IS REQUIRED FOR THE CREATION OF A REPORT. ***\nNow aborting.")
     sys.exit()
 
-# Create an output file
-output_file = open("../GenomeGit_Report.txt", "w")
+
 # Check if the user has selected a commit. If so, load the data.
 if (commit != "0"):
     # Checkout the desired version of the assembly
-    message = subprocess.check_output("git checkout " + commit, shell=True)
+    message = subprocess.check_output("git checkout " + commit, shell=True).decode("utf-8")
     # Inform the user
     print(
         "\nNow producing a report of the data contained in the repository for the commit: " + message +
         ". Warning: If you have added any data into the repository but did not commit, these changes will be lost.\n")
+    # Create an output file
+    output_file = open("../GenomeGit_Report_{}.txt".format(message), "w")
     output_file.write(
         "\n\nNow producing a report of the data contained in the repository for the commit: " + message +
         ". Warning: If you have added any data into the repository but did not commit, these changes will be lost.\n")
 else:
+    message = subprocess.check_output("git log -1 --pretty=%B", shell=True).decode("utf-8").strip()
     # Inform the user
     print("\nNow producing a report of the data currently contained in the repository\n")
+    # Create an output file
+    output_file = open("../GenomeGit_Report_{}.txt".format(message), "w")
     output_file.write("\n\nNow producing a report of the data currently contained in the repository\n")
 
+# If busco option was selected
+if (busco != "0"):
+    print('\nNow running a BUSCO analysis')
+    # Reconstruct the genome. can change name of file to actual fasta file?
+    reconstruct_dataset(size=60, directory="./Genome", output_file="../{}.fa".format(message),
+                        mode="Genome", seqID="0", region="0")
+    input_file = os.path.abspath('../{}.fa'.format(message))
+    if (lineage != "0"):
+        buscoReport(input_file, lineage, message)
+    else:
+        buscoReport(input_file=input_file, output_folder=message)
+    
 # Create dictionary about the genomic sequences
 # {seqKey:[seqID,lenght,contig_count,N_count,[{file:vcf},{file:gff},{file:sam}]]}
 genome_report = report_repo()
@@ -97,7 +117,7 @@ with open("./RepoMap.txt", "r") as repomap:
             variants_number += 1
 repomap.close()
 
-print("Number of sequences stored in the Genome dataset: " + str(len(genome_report.keys())))
+print("\nNumber of sequences stored in the Genome dataset: " + str(len(genome_report.keys())))
 print("Number of files contained in the Annotation dataset: " + str(annotation_number))
 print("Number of files contained in the Variants dataset: " + str(variants_number))
 print("Number of files contained in the Alignment dataset: " + str(alignment_number) + "\n")
