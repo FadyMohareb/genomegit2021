@@ -20,8 +20,8 @@ The following dependencies are required:
 * [MUMmer 4.0](https://mummer4.github.io/)
 * [MashMap 2.0](https://github.com/marbl/MashMap)
 * [Tabix 1.9](http://www.htslib.org/doc/tabix.html)
-To run BUSCO analysis:
-* [BUSCO](https://busco.ezlab.org/)
+* To run BUSCO analysis:
+    [BUSCO](https://busco.ezlab.org/)
 
 genomeGit 3.1 also makes use of the following Python modules: 
  * [pytabix 0.1](https://pypi.org/project/pytabix/)
