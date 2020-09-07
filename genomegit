@@ -80,7 +80,6 @@ elif [ "$1" = "add" ]; then
          c_flag=2000
          b_flag=1
          merge_or_split_flag=1
-         ggw=0
          #Loop through the arguments
          for WORD; do
             case $WORD in
@@ -128,10 +127,6 @@ elif [ "$1" = "add" ]; then
                  #Shift the arguments (jump to the next)
                  shift
                  ;;
-                 --ggw)
-                  ggw=1
-                  shift
-                  ;;
                # --b=*|--breaklen=*)
                #   #Determine the value of the b flag used for nucmer
                #   b_flag=${1#*=}
@@ -295,7 +290,7 @@ elif [ "$1" = "add" ]; then
                         echo "$class dataset detected. Now parsing $filename into git-compatible objects."
                         #Parse and add the dataset. Arguments: class file threads size tlenght
                         bash $source/parse_file.bash "$class" "$filename" "$threads" "$filesize" "$tlength" "$aligner"\
-                           "$c_flag" "$b_flag" "$percent_identity" "$kmer" "$segLength" "$merge_or_split_flag" "$ggw"
+                           "$c_flag" "$b_flag" "$percent_identity" "$kmer" "$segLength" "$merge_or_split_flag"
                         #Otherwise it was an invalid file
                      else
                         echo "Unrecognised file format: $filename"
@@ -533,7 +528,7 @@ elif [ "$1" = "diff" ]; then
                busco=1
                shift
                ;;
-            --l=*)
+            --lineage_dataset=*)
                #if specific lineage is given for command
                lineage=${1#*=}
                shift
@@ -610,6 +605,54 @@ elif [ "$1" = "report" ]; then
       echo "No genomegit repository detected. Use genomegit init to initiate one."
       exit 0
    fi
+#Push repo to GGW and create link files
+elif [ "$1" = "GGW" ]; then
+   #Shift (jump to next argument)
+   shift
+   #Check if .gnmgit repo exists and get inside if so
+   if [ -d ".gnmgit" ]; then
+      cd .gnmgit
+      #Default parameters
+      commit_list=0
+      message=0
+      threads=1
+      #Loop through the arguments
+      for WORD; do
+         case $WORD in
+               #If the current argument is the repo address
+            --message*)
+               #Determine the commit hash selected
+               message=1
+               #Shift the arguments (jump to the next)
+               shift
+               ;;
+            --threads=*)
+               threads=${1#*=}
+               shift
+               ;;
+            
+         esac
+      done
+      if ! [ $# = 0 ]; then
+         if [ "$message" = 1 ]; then
+            commit_list=()
+            for m in $@; do
+            commit=$(git log --grep="${m}" --format=%H -n 1)
+            commit_list+=($commit)
+            done
+         else
+            commit_list="$@"
+         fi
+      fi
+         #run script
+         python $source/get_links.py "$threads" "$commit_list" 
+         git add -A
+   else
+      echo "No genomegit repository detected. Use genomegit init to initiate one."
+      exit 0
+   fi
+
+
 
    # If the first argument does not correspond with any of the previous, let git handle it.
 else

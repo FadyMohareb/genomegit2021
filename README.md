@@ -1,5 +1,5 @@
 # genomeGit 3.1: A distributed version control system for fast and efficient updating of genome assembly data.
-genomeGit 3.1 is a distributed version control system which utilizes Git for the quick storage and management of genomic data. It enables quick 'lifting-over' of genomic depedent files, while being storage efficient. GenomeGit 3.1 can currently deal with the following datasets:
+GenomeGit 3.1 is a distributed version control system which utilizes Git for the quick storage and management of genomic data. It enables quick 'lifting-over' of genomic depedent files, while being storage efficient. GenomeGit 3.1 can currently deal with the following datasets:
 
 * Genome assemblies (FASTA)
 * Variant Calling Files (VCF)
@@ -9,7 +9,7 @@ genomeGit 3.1 is a distributed version control system which utilizes Git for the
 GenomeGit 3.1 is currently only compatiable with Unix Operating Systems.
 
 # What's changed with genomeGit 3.1?
-GenomeGit 3.1 has been optimised for use with GenomeGitWeb - allowing users the option of aligning assembly files in the absence of genomic dependent files and aligning the new assembly file to all the previous assembly files in the repository. The former allows users to make use of GenomeGit and GenomeGitWeb for comparsion purposes, without lift-over, whilst the latter ensures that the link tracks, which show identical sequences between files, are available between the new assembly version all the previous ones.
+GenomeGit 3.1 has been optimised for use with [GenomeGitWeb](https://github.com/fechitheodore/GenomeGitWeb) - allowing users the option of aligning assembly files in the absence of genomic dependent files and aligning the new assembly file to all the previous assembly files in the repository. The former allows users to make use of GenomeGit and GenomeGitWeb for comparsion purposes, without lift-over, whilst the latter ensures that the link tracks, which show identical sequences between files, are available between the new assembly version all the previous ones.
 Additionally, a BUSCO analysis pipeline has been added to the report and difference functionality to allow users to assess and compare the completeness of assembly files in the repository.
 Improvements to increase the user friendliness of the program and remove minor bugs, have also been made. FASTA files with ambiguous IUPAC DNA characters are now able to be stored in GenomeGit 3.1, all the functionalities are fully portable in Mac OS X, and duplicate FASTA files cannot be added to the repository.
 
@@ -23,9 +23,13 @@ The following dependencies are required:
 * To run BUSCO analysis:
     [BUSCO](https://busco.ezlab.org/)
 
-genomeGit 3.1 also makes use of the following Python modules: 
+GenomeGit 3.1 also makes use of the following Python modules: 
  * [pytabix 0.1](https://pypi.org/project/pytabix/)
  * [pyfaidx 0.5.5.2](https://pypi.org/project/pyfaidx/)
+
+To use the functionalities of GenomeGit 3.1, Mac OS X users will need to download GNU-sed and set it as sed.
+* Download GNU from homebrew: ```brew install gnu-sed```
+* Execute ```brew info gnu-sed``` and follow the instructions to add it to path as sed.
 
 ### Installation
 In order to be able to run the program anywhere on your system, run ```genomegit_install```. This wil lcreate a symlink for genomegit in the /usr/bin directory. You may need to make the main script executable using ```chmod u+x <path_to_genomeGit>/genomeigt```.
@@ -68,9 +72,6 @@ For the hyrid alignment, the user can also use the flag ```--ms=<x>``` as either
 
 Using only NUCmer4 will result in the detection of both splits and merges. 
 
-#### GenomeGitWeb link track flag
-To align the new genome assembly to all the other assemblies in the repository, ```--ggw``` can be used.
-
 #### Obtaining a report of lifted over assemblies
 genomeGit 3.1 will automatically classify the file inputted and parse it into it's respective Git-compatible sub-files, within the Git repository. A summary of the charactersticis of the data within the repository can be visualised using the command ```genomegit report```. 
 
@@ -110,6 +111,10 @@ The user can also execute ```genomegit report``` to obtain a report output *Geno
 
 A BUSCO analysis can also be executed while making a report or viewing the difference between two versions of genomic data by including the additional parameter ```--busco```. The lineage dataset used in BUSCO can also be specified using ```--lineage_dataset=<x>```.
 
+### Compatibility with GenomeGitWeb
+GenomeGit repositories can be visualised and shared in GenomeGitWeb. After creating a new project on GenomeGitWeb, the GenomeGitWeb remote server for the project can be added as a remote server to the GenomeGit repository and pushed to. GenomeGitWeb automatically monitors for new commits so after a few minutes, the data from the GenomeGit repository should be available in GenomeGitWeb.
+Executing ```genomegit GGW``` after adding and committing all the fasta files to the repository will ensure that all the files are aligned with one another. The purpose of the alignments is to ensure that in visualising the data using GenomeGitWeb, the link tracks between all fasta files will be created. This allows them to be easily compared. Remember to commit the new alignments to the repository before pushing the new commits to GenomeGitWeb
+
 
 ## Example commands
 #### Installing genomeGit
@@ -129,7 +134,7 @@ A BUSCO analysis can also be executed while making a report or viewing the diffe
 #### Adding and committing files into the repository
 ```genomegit add /path/to/directory/*``` 
 
-```genomegit add --t=32 --a=2 --c=3000 --ggw NewAssembly.fa```
+```genomegit add --t=32 --a=2 --c=3000 NewAssembly.fa```
 
 ```genomegit commit -m "My_First_Commit"```
 #### Extracting a file out of the repository
@@ -143,4 +148,6 @@ A BUSCO analysis can also be executed while making a report or viewing the diffe
 
 ```genomegit diff --message My_First_Commit My_Second_Commit```
 
-```genomegit diff --ggw --lineage_dataset=acidobacteria_odb10 --message My_First_Commit My_Second_Commit```
+```genomegit diff --busco --lineage_dataset=acidobacteria_odb10 --message My_First_Commit My_Second_Commit```
+#### Aligning all the files in the repository
+```genomegit GGW```

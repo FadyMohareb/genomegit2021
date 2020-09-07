@@ -31,7 +31,6 @@ percent_identity = int(sys.argv[8])
 kmer = int(sys.argv[9])
 segLength = int(sys.argv[10])
 ms_flag = int(sys.argv[11])
-ggw = int(sys.argv[12])
 file_size_bytes = os.path.getsize(new_assembly)
 
 
@@ -222,14 +221,15 @@ for dataset in ToUpdate.keys():
 # Determine the alignment pickle
 alignment_pickle = obtain_alignment_pickle("./temporary_directory/genome_old.fa",
                                            new_assembly)
-#check if file has already been added and stored in repository
+print(alignment_pickle)
+# check if file has already been added and stored in repository
 new_assembly_hash = alignment_pickle.split("_")[0]
 comp_hash = new_assembly_hash.split("/")[2]
 stored_alignments = [hash for hash in glob.glob("Delta/*"+comp_hash+"*")]
-#to check new hash for  comparing first and second commits
+# to check new hash for  comparing first and second commits
 if (alignment_pickle == new_assembly_hash+"_"+comp_hash):
     stored_alignments.append(alignment_pickle)
-if (len(stored_alignments) !=0):
+if (len(stored_alignments) != 0):
     print("\n\t *** THE REPOSITORY ALREADY CONTAINS THIS FASTA FILE.***\n\tNow aborting.")
     sys.exit(1)
 variables = obtain_variables(alignment_pickle)
@@ -239,44 +239,50 @@ queries, alignment_pickle, summary_Dict, oldSeqs, newSeqs = variables
 ###################################################################
 # PART 3. START THE INTERPRETATION OF THE ALIGNMENT INFORMATION #
 ###################################################################
-for dataset in ToUpdate.keys():
-    if (dataset != "Genome" and len(ToUpdate[dataset]) != 0):
-        # Inform the user
-        print("\n\t*PART III. INTERPRETATION OF THE ALIGNMENT INFORMATION AND CREATION OF UPDATED FILES")
-        print("\t{}".format(str(datetime.datetime.now())))
-        # Interpret the information contained in the delta_dict and obtain the updated files.
-        interpret_alignment(queries=queries, threads=number_threads, ToUpdate=ToUpdate,
-                            tlength=template_length, new_assembly=new_assembly)
+if ("Annotation" in ToUpdate or "Alignment" in ToUpdate or "Variants" in ToUpdate):
+    # Inform the user
+    print("\n\t*PART III. INTERPRETATION OF THE ALIGNMENT INFORMATION AND CREATION OF UPDATED FILES")
+    print("\t{}".format(str(datetime.datetime.now())))
+    # Interpret the information contained in the delta_dict and obtain the updated files.
+    interpret_alignment(queries=queries, threads=number_threads, ToUpdate=ToUpdate,
+                        tlength=template_length, new_assembly=new_assembly)
 
-###################################################################
-# PART 4. OBTAIN ALIGNMENT INFORMATION FOR OLDER COMMITS#
-###################################################################
-if (ggw != 0):
-    # Get list of commits and head commit
-    commitList = check_output(
-        "git log --format=%H", shell=True).decode("utf-8").split()
-    #first commit is HEAD commit
-    commitList.pop(0)
-    #headCommit = check_output(
-        #"git rev-parse HEAD", shell=True).decode("utf-8").rstrip()
-    if (len(commitList) !=0) :
-        print("\n\t*PART IV. OBTAIN ALIGNMENT DATA FOR OLDER COMMITS")
-        #remove previous assembly so it will not align to old assembly
-        os.remove("./temporary_directory/genome_old.fa")
-        for commit in commitList:
-            #if (commit != headCommit):
-                ShellCommand = Popen("git checkout " + commit +
-                                    " 2> /dev/null", shell=True).wait()
-                # reconstruct
-                reconstruct_dataset(size=60, directory="./Genome",
-                                    output_file="./temporary_directory/genome_old.fa", mode="Genome")
-                alignment_pickle1 = obtain_alignment_pickle(
-                    "./temporary_directory/genome_old.fa", new_assembly)
-                variables = obtain_variables(alignment_pickle1)
-                store_variables(variables=variables,
-                                alignment_pickle=alignment_pickle1)
-                os.remove("./temporary_directory/genome_old.fa")
-    ShellCommand = Popen("git checkout master 2> /dev/null", shell=True).wait()
+# ###################################################################
+# # PART 4. OBTAIN ALIGNMENT INFORMATION FOR OLDER COMMITS #
+# ###################################################################
+# if (ggw != 0):
+#     # Get list of commits and head commit
+#     commitList = check_output(
+#         "git log --format=%H", shell=True).decode("utf-8").split()
+#     print(commitList)
+#     # first commit is HEAD commit
+#     commitList.pop(0)
+#     # headCommit = check_output(
+#     # "git rev-parse HEAD", shell=True).decode("utf-8").rstrip()
+#     if (len(commitList) != 0):
+#         print("\n\t*PART IV. OBTAIN ALIGNMENT DATA FOR OLDER COMMITS")
+#         # remove previous assembly so it will not align to old assembly
+#         for commit in commitList:
+#             # if (commit != headCommit):
+#             ShellCommand = Popen("git checkout " + commit +
+#                                  " > /dev/null", shell=True).wait()
+#             # reconstruct
+#             reconstruct_dataset(size=60, directory="./Genome",
+#                                 output_file="./temporary_directory/genome_{}.fa".format(commit), mode="Genome")
+#             ShellCommand = Popen(
+#                 "git checkout master > /dev/null", shell=True).wait()
+#             alignment_pickle = obtain_alignment_pickle(
+#                 "./temporary_directory/genome_{}.fa".format(commit), new_assembly)
+#             print(alignment_pickle, commit)
+#             variables = obtain_alignment(old_assembly="./temporary_directory/genome_{}.fa".format(commit),
+#                                          new_assembly=new_assembly,
+#                                          directory="./temporary_directory",
+#                                          threads=number_threads, ToUpdate=ToUpdate, alignment_pickle=alignment_pickle,
+#                                          aligner_switch=aligner_switch, percent_identity=percent_identity,
+#                                          kmer=kmer, segLength=segLength, c_flag=c_flag, b_flag=b_flag, ms_flag=ms_flag)
+#             store_variables(variables=variables,
+#                             alignment_pickle=alignment_pickle)
+#             os.remove("./temporary_directory/genome_old.fa")
 
 
 # Inform the user the update is completed

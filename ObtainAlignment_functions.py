@@ -383,10 +383,10 @@ def filter_mashMap(mash_file, directory, alignment_pickle, out_file, threads, c_
     call(
         "cat tmp_delta/* | awk '/[\/]/ || /^NUCMER/ {{ next }} 2' > {} ".format(out_file), shell=True)
     # Add file directory paths for the query and reference to the delta file
-    call("gsed -i '1i {} {}' {} ".
+    call("sed -i '1i {} {}' {} ".
          format(reference_directory, query_directory, out_file), shell=True)
     # Add NUCMER to the following line
-    sed_command = ['gsed', '-i', '2iNUCMER', out_file]
+    sed_command = ['sed', '-i', '2iNUCMER', out_file]
     Popen(sed_command).wait()
     # Remove the temporary directory
     shutil.rmtree('tmp_delta')
@@ -401,7 +401,7 @@ def get_sequences_mashmap(ref_file_name, query_file_name, name_out, score, c_fla
                query_file_name, '-p', name_out, '-t', str(1), '-c', str(c_flag), '-b', str(b_flag)]
     # Add score to each delta file at the end of the alignment header line
     Popen(command).wait()
-    Popen("gsed 's/^>.*/& {}/' {} -i".format(score,
+    Popen("sed 's/^>.*/& {}/' {} -i".format(score,
                                             name_out + ".delta"), shell=True).wait()
 
 
